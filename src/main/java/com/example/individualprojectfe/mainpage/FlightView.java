@@ -1,10 +1,15 @@
 package com.example.individualprojectfe.mainpage;
 
 import com.example.individualprojectfe.mainpage.copiedclasses.FlightDto;
+import com.example.individualprojectfe.mainpage.copiedclasses.RequestData;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.renderer.TextRenderer;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,33 +20,56 @@ import java.util.List;
 public class FlightView extends VerticalLayout {
 
     private final FlightClient flightClient;
-
     private final Grid<FlightDto> flightGrid;
+    private TextField currencyCodeField;
+    private TextField originLocationCodeField;
+    private TextField destinationLocationCodeField;
+    private DatePicker departureDateField;
+    private TimePicker departureTimeField;
 
 
     public FlightView(FlightClient flightClient) {
         this.flightClient = flightClient;
 
         Button getFlightsButton = new Button("Get Flights", event -> refreshFlights());
-
         Button createFlightsButton = new Button("Create Flights", event -> createFlights());
 
         flightGrid = new Grid<>(FlightDto.class);
+        currencyCodeField = new TextField("Currency Code");
+        originLocationCodeField = new TextField("Origin Location Code");
+        destinationLocationCodeField = new TextField("Destination Location Code");
+        departureDateField = new DatePicker("Departure Date");
+        departureTimeField = new TimePicker("Departure Time");
 
-        flightGrid.setColumns("id", "numberOfBookableSeats", "segments");
+        flightGrid.setColumns("id", "numberOfBookableSeats");
         flightGrid.getColumnByKey("numberOfBookableSeats").setHeader("Seats available");
+
+        flightGrid.addColumn(flightDto -> flightDto.getSegments().size())
+                .setHeader("Segments");
 
         flightGrid.addColumn(FlightDto::getPrice)
                 .setHeader("Price")
                 .setRenderer(new TextRenderer<>(priceDto ->
                         String.format("%s %s", priceDto.getPrice().getTotal(), priceDto.getPrice().getCurrency())));
 
-        add(getFlightsButton, createFlightsButton, flightGrid);
+        flightGrid.setWidth("50%");
+        setSizeFull();
+        setHorizontalComponentAlignment(Alignment.CENTER, getFlightsButton, createFlightsButton, flightGrid);
+        setSpacing(true);
+
+        // Use HorizontalLayout for input fields
+        HorizontalLayout inputLayout = new HorizontalLayout(currencyCodeField, originLocationCodeField, destinationLocationCodeField, departureDateField, departureTimeField);
+        inputLayout.setSpacing(true);
+        setHorizontalComponentAlignment(Alignment.CENTER, getFlightsButton, createFlightsButton, inputLayout, flightGrid);
+
+        add(getFlightsButton, createFlightsButton, inputLayout, flightGrid);
+        expand(flightGrid);
         refreshFlights();
     }
 
     private void refreshFlights() {
         try {
+
             List<FlightDto> flights = flightClient.getAllFlights();
             flightGrid.setItems(flights);
         } catch (Exception e) {
@@ -52,7 +80,20 @@ public class FlightView extends VerticalLayout {
 
     private void createFlights() {
         try {
-            flightClient.createFlights();
+            String currencyCode = currencyCodeField.getValue();
+            String originLocationCode = originLocationCodeField.getValue();
+            String destinationLocationCode = destinationLocationCodeField.getValue();
+            String departureDate = departureDateField.getValue().toString();
+            String departureTime = departureTimeField.getValue().toString() + ":00";
+
+            RequestData requestData = new RequestData();
+            requestData.setCurrencyCode(currencyCode);
+            requestData.setOriginLocationCode(originLocationCode);
+            requestData.setDestinationLocationCode(destinationLocationCode);
+            requestData.setDepartureDate(departureDate);
+            requestData.setDepartureTime(departureTime);
+
+            flightClient.createFlights(requestData);
             refreshFlights();
             Notification.show("Flights created successfully.");
         } catch (Exception e) {

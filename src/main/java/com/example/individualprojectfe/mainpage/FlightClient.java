@@ -1,9 +1,7 @@
 package com.example.individualprojectfe.mainpage;
 
 import com.example.individualprojectfe.mainpage.copiedclasses.FlightDto;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import com.example.individualprojectfe.mainpage.copiedclasses.RequestData;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -22,9 +20,9 @@ public class FlightClient {
         this.restTemplate = restTemplate;
     }
 
-    public void createFlights() {
+    public void createFlights(RequestData requestData) {
         // Make a POST request to create flights
-        restTemplate.postForEntity(backendUrl + "/v1/flights/test", null, FlightDto.class);
+        restTemplate.postForEntity(backendUrl + "/v1/flights/test", requestData, FlightDto.class);
     }
 
     public List<FlightDto> getAllFlights() {
