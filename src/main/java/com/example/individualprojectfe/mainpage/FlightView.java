@@ -1,7 +1,7 @@
 package com.example.individualprojectfe.mainpage;
 
-import com.example.individualprojectfe.mainpage.copiedclasses.FlightDto;
-import com.example.individualprojectfe.mainpage.copiedclasses.RequestData;
+import com.example.individualprojectfe.mainpage.domain.flight.FlightDto;
+import com.example.individualprojectfe.mainpage.domain.flight.RequestData;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
@@ -12,7 +12,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.renderer.TextRenderer;
 import com.vaadin.flow.router.Route;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
@@ -31,8 +30,9 @@ public class FlightView extends VerticalLayout {
     public FlightView(FlightClient flightClient) {
         this.flightClient = flightClient;
 
-        Button getFlightsButton = new Button("Get Flights", event -> refreshFlights());
         Button createFlightsButton = new Button("Create Flights", event -> createFlights());
+        Button loginButton = new Button("Login", event -> navigateToLogin());
+        loginButton.getElement().getThemeList().add("primary");
 
         flightGrid = new Grid<>(FlightDto.class);
         currencyCodeField = new TextField("Currency Code");
@@ -40,6 +40,11 @@ public class FlightView extends VerticalLayout {
         destinationLocationCodeField = new TextField("Destination Location Code");
         departureDateField = new DatePicker("Departure Date");
         departureTimeField = new TimePicker("Departure Time");
+
+        HorizontalLayout topBar = new HorizontalLayout();
+        topBar.setWidthFull();
+        topBar.setJustifyContentMode(JustifyContentMode.END);
+        topBar.add(loginButton);
 
         flightGrid.setColumns("id", "numberOfBookableSeats");
         flightGrid.getColumnByKey("numberOfBookableSeats").setHeader("Seats available");
@@ -54,15 +59,14 @@ public class FlightView extends VerticalLayout {
 
         flightGrid.setWidth("50%");
         setSizeFull();
-        setHorizontalComponentAlignment(Alignment.CENTER, getFlightsButton, createFlightsButton, flightGrid);
+        setHorizontalComponentAlignment(Alignment.CENTER, flightGrid);
         setSpacing(true);
 
-        // Use HorizontalLayout for input fields
-        HorizontalLayout inputLayout = new HorizontalLayout(currencyCodeField, originLocationCodeField, destinationLocationCodeField, departureDateField, departureTimeField);
+        HorizontalLayout inputLayout = new HorizontalLayout(currencyCodeField, originLocationCodeField, destinationLocationCodeField, departureDateField, departureTimeField, createFlightsButton);
         inputLayout.setSpacing(true);
-        setHorizontalComponentAlignment(Alignment.CENTER, getFlightsButton, createFlightsButton, inputLayout, flightGrid);
+        setHorizontalComponentAlignment(Alignment.CENTER, createFlightsButton, inputLayout, flightGrid);
 
-        add(getFlightsButton, createFlightsButton, inputLayout, flightGrid);
+        add(topBar, inputLayout, createFlightsButton, flightGrid);
         expand(flightGrid);
         refreshFlights();
     }
@@ -100,5 +104,9 @@ public class FlightView extends VerticalLayout {
             e.printStackTrace();
             Notification.show("Error creating flights. Please try again.");
         }
+    }
+
+    private void navigateToLogin() {
+        getUI().ifPresent(ui -> ui.navigate(LoginView.class));
     }
 }

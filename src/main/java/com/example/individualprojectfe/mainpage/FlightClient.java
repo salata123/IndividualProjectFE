@@ -1,7 +1,7 @@
 package com.example.individualprojectfe.mainpage;
 
-import com.example.individualprojectfe.mainpage.copiedclasses.FlightDto;
-import com.example.individualprojectfe.mainpage.copiedclasses.RequestData;
+import com.example.individualprojectfe.mainpage.domain.flight.FlightDto;
+import com.example.individualprojectfe.mainpage.domain.flight.RequestData;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 

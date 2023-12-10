@@ -1,4 +1,4 @@
-package com.example.individualprojectfe.mainpage.copiedclasses;
+package com.example.individualprojectfe.mainpage.domain.flight;
 
 import lombok.Data;
 
