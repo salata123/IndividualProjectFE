@@ -1,12 +1,14 @@
 package com.example.individualprojectfe.mainpage;
 
+import com.example.individualprojectfe.mainpage.domain.airports.AirportDatabase;
+import com.example.individualprojectfe.mainpage.domain.airports.Currency;
 import com.example.individualprojectfe.mainpage.domain.flight.FlightDto;
 import com.example.individualprojectfe.mainpage.domain.flight.RequestData;
-import com.example.individualprojectfe.mainpage.domain.user.UserDto;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
@@ -23,10 +25,10 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Route("flights")
@@ -34,13 +36,12 @@ import java.util.List;
 @SpringComponent
 @EnableScheduling
 public class FlightView extends VerticalLayout implements BeforeEnterObserver {
-
-    @Autowired
     private final FlightClient flightClient;
     private final Grid<FlightDto> flightGrid;
-    private final TextField currencyCodeField;
-    private final TextField originLocationCodeField;
-    private final TextField destinationLocationCodeField;
+    private final ComboBox<Currency> currencyCodeComboBox;
+    private final ComboBox<String> originLocationCodeComboBox;
+    private final ComboBox<String> destinationLocationCodeComboBox;
+    private final AirportDatabase airportDatabase;
     private final DatePicker departureDateField;
     private final TimePicker departureTimeField;
     private final Grid<FlightDto> cartGrid;
@@ -50,15 +51,14 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
     private final Button logoutButton = new Button("Logout", event -> performLogout());
     private final Button profileButton = new Button("Profile", event -> navigateToProfile());
     private final Button loginButton = new Button("Login", event -> navigateToLogin());
-
-    @Autowired
     private LoginView loginView;
     @Autowired
     private LoginTokenAuth loginTokenAuth;
-
+    @Autowired
     public FlightView(FlightClient flightClient, LoginView loginView) {
         this.flightClient = flightClient;
         this.loginView = loginView;
+        airportDatabase = new AirportDatabase();
 
         Button createFlightsButton = new Button("Show Flights", event -> createFlights());
         loginButton.getElement().getThemeList().add("primary");
@@ -67,9 +67,15 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
         isLoggedInButton.getElement().getThemeList().add("primary");
 
         flightGrid = new Grid<>(FlightDto.class);
-        currencyCodeField = new TextField("Currency Code");
-        originLocationCodeField = new TextField("Origin Location Code");
-        destinationLocationCodeField = new TextField("Destination Location Code");
+        currencyCodeComboBox = new ComboBox<>("Currency Code", Arrays.asList(Currency.values()));
+        currencyCodeComboBox.setValue(Currency.USD);
+        originLocationCodeComboBox = new ComboBox<>("Origin Airport");
+        originLocationCodeComboBox.setItems(airportDatabase.getAirportNames());
+
+        // Create ComboBox for destinationLocationCodeField
+        destinationLocationCodeComboBox = new ComboBox<>("Destination Airport");
+        destinationLocationCodeComboBox.setItems(airportDatabase.getAirportNames());
+
         departureDateField = new DatePicker("Departure Date");
         departureTimeField = new TimePicker("Departure Time");
 
@@ -107,7 +113,7 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
         flightGrid.setWidth("50%");
 
 
-        HorizontalLayout inputLayout = new HorizontalLayout(currencyCodeField, originLocationCodeField, destinationLocationCodeField, departureDateField, departureTimeField);
+        HorizontalLayout inputLayout = new HorizontalLayout(currencyCodeComboBox, originLocationCodeComboBox, destinationLocationCodeComboBox, departureDateField, departureTimeField);
         inputLayout.setSpacing(true);
 
         HorizontalLayout buttonLayout = new HorizontalLayout(createFlightsButton, isLoggedInButton);
@@ -146,7 +152,7 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
             // Check if the selectedFlight is not null
             if (selectedFlight != null) {
                 // Call the backend API to add the selected flight to the cart
-                flightClient.addFlightToCart(getCurrentCartId(), selectedFlight.getId());
+                flightClient.addFlightToCart(flightClient.getCurrentCartId(), selectedFlight.getId());
 
                 // Refresh the cartGrid with the updated cart data
                 refreshCart();
@@ -171,7 +177,7 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
     private void removeFromCart(FlightDto flightDto) {
         try {
             // Call the backend API to remove the selected flight from the cart
-            flightClient.removeFlightFromCart(getCurrentCartId(), flightDto.getId());
+            flightClient.removeFlightFromCart(flightClient.getCurrentCartId(), flightDto.getId());
 
             // Refresh the cartGrid with the updated cart data
             refreshCart();
@@ -186,7 +192,7 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
     private void refreshCart() {
         try {
             // Fetch and update the cart data from the backend
-            List<Long> cartFlightIds = flightClient.getCartFlights(getCurrentCartId());
+            List<Long> cartFlightIds = flightClient.getCartFlights(flightClient.getCurrentCartId());
 
             // Get FlightDto objects from flight ids
             List<FlightDto> cartFlights = new ArrayList<>();
@@ -213,9 +219,11 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
 
     private void createFlights() {
         try {
-            String currencyCode = currencyCodeField.getValue();
-            String originLocationCode = originLocationCodeField.getValue();
-            String destinationLocationCode = destinationLocationCodeField.getValue();
+            String currencyCode = currencyCodeComboBox.getValue().toString();
+            String originAirportName = originLocationCodeComboBox.getValue();
+            String originLocationCode = airportDatabase.getIataCodeByName(originAirportName);
+            String destinationAirportName = destinationLocationCodeComboBox.getValue();
+            String destinationLocationCode = airportDatabase.getIataCodeByName(destinationAirportName);
             String departureDate = departureDateField.getValue().toString();
             String departureTime = departureTimeField.getValue().toString() + ":00";
 
@@ -226,13 +234,21 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
             requestData.setDepartureDate(departureDate);
             requestData.setDepartureTime(departureTime);
 
-            flightClient.createFlights(requestData);
-            refreshFlights();
-            Notification.show("Flights created successfully.");
+            if (isDepartureDateValid(departureDateField.getValue())) {
+                flightClient.createFlights(requestData);
+                refreshFlights();
+                Notification.show("Flights created successfully.");
+            } else {
+                Notification.show("Departure date cannot be set to a past date. Please choose a valid date.");
+            }
         } catch (Exception e) {
             e.printStackTrace();
             Notification.show("Error creating flights. Please try again.");
         }
+    }
+
+    private boolean isDepartureDateValid(LocalDate departureDate) {
+        return departureDate != null && !departureDate.isBefore(LocalDate.now());
     }
 
     @Override
@@ -249,7 +265,7 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
 
         if (isAuthenticated) {
             // Fetch the cartId from the backend whenever needed
-            Long currentCartId = getCurrentCartId();
+            Long currentCartId = flightClient.getCurrentCartId();
 
             if (currentCartId != null) {
                 showCart();
@@ -280,25 +296,6 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
         }
     }
 
-
-    private Long getCurrentCartId() {
-        String username = loginView.getLoggedUserUsername();
-
-        try {
-            // Call the backend API to get the user by username
-            UserDto userDto = flightClient.getUserByUsername(username);
-
-            if (userDto != null && userDto.getCart() != null) {
-                return userDto.getCart().getId();
-            } else {
-                return null;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     private void showCart() {
         cartGrid.setVisible(true);
     }
@@ -307,7 +304,6 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
         cartGrid.setVisible(false);
     }
 
-    @Scheduled(fixedRate = 1000)
     private boolean isUserAuthenticated() {
         boolean isAuthenticated = loginView.isAuthenticated();
 

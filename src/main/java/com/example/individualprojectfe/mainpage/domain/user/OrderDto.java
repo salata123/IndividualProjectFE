@@ -11,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 public class OrderDto {
     private Long id;
-    private Cart cart;
-    private User user;
+    private Long cartId;
+    private Long userId;
     private List<Long> flights;
 }

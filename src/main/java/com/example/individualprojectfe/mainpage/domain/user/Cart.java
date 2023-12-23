@@ -18,11 +18,8 @@ public class Cart {
     @Column(name = "ID")
     private Long id;
 
-    @JsonIgnore
-    @OneToOne
-    @JoinColumn(name = "USER_ID", referencedColumnName = "ID")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private User user;
+    @Column(name = "USER_ID")
+    private Long userId;
 
     @ElementCollection
     @CollectionTable(

@@ -17,7 +17,6 @@ import org.springframework.web.client.RestTemplate;
 public class LoginTokenAuth extends VerticalLayout {
     private static final String BASE_URL = "http://localhost:8080/v1/loginTokens/checkExpiration/";
     private final RestTemplate restTemplate;
-    private LoginView loginView;
 
     @Autowired
     public LoginTokenAuth(RestTemplate restTemplate) {
@@ -26,13 +25,8 @@ public class LoginTokenAuth extends VerticalLayout {
 
     public boolean isTokenExpired(String username) {
         String url = BASE_URL + username;
-        System.out.println("Checking token expiration for user: " + username);
-        System.out.println("URL: " + url);
-
         Boolean response = restTemplate.getForObject(url, Boolean.class);
-
-        // Check if the response is not null
-        System.out.println("Response: " + response);
+        System.out.println("Is login token expired: " + response); //debug
         return response != null && response;
     }
 

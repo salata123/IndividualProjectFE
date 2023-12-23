@@ -13,7 +13,7 @@ public class UserDto {
     private Long id;
     private String username;
     private String password;
-    private Cart cart;
-    private List<Order> orders;
-
+    private Long cartId;
+    private List<Long> orders;
+    private Long loginTokenId;
 }

@@ -23,9 +23,17 @@ public class User {
     @Column(name = "PASSWORD")
     private String password;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, optional = false)
-    private Cart cart;
+    @Column(name = "CART_ID")
+    private Long cartId;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Order> orders;
+    @ElementCollection
+    @CollectionTable(
+            name = "USER_ORDERS",
+            joinColumns = @JoinColumn(name = "USER_ID")
+    )
+    @Column(name = "ORDER_IDS")
+    private List<Long> orders;
+
+    @Column(name = "LOGIN_TOKEN_ID")
+    private Long loginTokenId;
 }

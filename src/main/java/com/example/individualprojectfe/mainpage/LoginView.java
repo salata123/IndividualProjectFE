@@ -36,8 +36,6 @@ public class LoginView extends VerticalLayout {
     private final Button registerButton;
     private String loggedUserUsername;
     private boolean isAuthenticated;
-    @Autowired
-    private LoginTokenAuth loginTokenAuth;
 
     @Autowired
     public LoginView(RestTemplate restTemplate) {
@@ -65,7 +63,7 @@ public class LoginView extends VerticalLayout {
         data.put("username", username);
         data.put("password", password);
 
-        HttpClient httpClient = HttpClient.newHttpClient();  // Initialize the httpClient
+        HttpClient httpClient = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/v1/users/login"))
                 .header("Content-Type", "application/json")
@@ -86,9 +84,13 @@ public class LoginView extends VerticalLayout {
                 Notification.show("Login failed. Check your credentials.");
             }
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-            Notification.show("An error occurred during login: " + e.getMessage());
+            handleLoginException(e);
         }
+    }
+
+    private void handleLoginException(Exception e) {
+        e.printStackTrace();
+        Notification.show("An error occurred during login: " + e.getMessage());
     }
 
     private void performRegistration() {
@@ -158,16 +160,20 @@ public class LoginView extends VerticalLayout {
                     UserDto.class
             );
         } catch (HttpClientErrorException e) {
-            // Handle HTTP errors (e.g., 4xx client errors)
+            handleRegistrationException(e);
             return ResponseEntity.status(e.getStatusCode()).body(null);
         } catch (Exception e) {
-            // Handle other exceptions (e.g., network errors)
+            handleRegistrationException(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
+    private void handleRegistrationException(Exception e) {
+        e.printStackTrace();
+        Notification.show("An error occurred during registration: " + e.getMessage());
+    }
+
     private void navigateToMainView() {
-        // Redirect to the main view
         getUI().ifPresent(ui -> ui.navigate(FlightView.class));
     }
 }

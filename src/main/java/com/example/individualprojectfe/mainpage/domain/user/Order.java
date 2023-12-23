@@ -17,19 +17,17 @@ public class Order {
     @Column(name = "ID")
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "CART_ID")
-    private Cart cart;
+    @Column(name = "CART_ID")
+    private Long cartId;
 
-    @ManyToOne
-    @JoinColumn(name = "USER_ID")
-    private User user;
+    @Column(name = "USER_ID")
+    private Long userId;
 
     @ElementCollection
     @CollectionTable(
             name = "ORDER_FLIGHTS",
             joinColumns = @JoinColumn(name = "ORDER_ID")
     )
-    @Column(name = "FLIGHT_ID")
+    @Column(name = "FLIGHT_ID_LIST")
     private List<Long> flights;
 }
