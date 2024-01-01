@@ -3,10 +3,8 @@ package com.example.individualprojectfe.mainpage;
 import com.example.individualprojectfe.mainpage.domain.flight.FlightDto;
 import com.example.individualprojectfe.mainpage.domain.flight.RequestData;
 import com.example.individualprojectfe.mainpage.domain.user.CartDto;
-import com.example.individualprojectfe.mainpage.domain.user.Order;
 import com.example.individualprojectfe.mainpage.domain.user.OrderDto;
 import com.example.individualprojectfe.mainpage.domain.user.UserDto;
-import com.vaadin.flow.spring.annotation.SpringComponent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -32,13 +30,11 @@ public class FlightClient {
         this.restTemplate = restTemplate;
     }
 
-    public void createFlights(RequestData requestData) {
-        // Make a POST request to create flights
-        restTemplate.postForEntity(backendUrl + "/v1/flights", requestData, FlightDto.class);
+    public void createFlights(String departure, String arrival, RequestData requestData) {
+        restTemplate.postForEntity(backendUrl + "/v1/flights/create/" + departure + "/" + arrival,  requestData, FlightDto.class);
     }
 
     public List<FlightDto> getAllFlights() {
-        // Make a GET request to retrieve the list of flights
         FlightDto[] flights = restTemplate.getForObject(backendUrl + "/v1/flights", FlightDto[].class);
         return Arrays.asList(flights);
     }

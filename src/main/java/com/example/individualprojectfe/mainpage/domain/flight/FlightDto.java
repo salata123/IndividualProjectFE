@@ -15,4 +15,6 @@ public class FlightDto {
     private Price price;
     private int numberOfBookableSeats;
     private List<Segment> segments = new ArrayList<>();
+    private Long visaId;
+    private String visaType;
 }

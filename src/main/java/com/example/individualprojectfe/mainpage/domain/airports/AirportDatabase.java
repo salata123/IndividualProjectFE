@@ -71,6 +71,14 @@ public class AirportDatabase {
                 return airport.getIataCode();
             }
         }
-        return null; // Return null if the airport name is not found
+        return null;
+    }
+    public String getCountryCodeByAirportName(String airportName) {
+        for (Airport airport : airports) {
+            if (airport.getName().equalsIgnoreCase(airportName)) {
+                return airport.getCountryCode();
+            }
+        }
+        return null;
     }
 }

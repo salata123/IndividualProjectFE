@@ -31,4 +31,10 @@ public class Flight {
             joinColumns = @JoinColumn(name = "FLIGHT_ID"),
             inverseJoinColumns = @JoinColumn(name = "SEGMENT_ID"))
     private List<Segment> segments = new ArrayList<>();
+
+    @Column(name = "VISA_ID")
+    private Long visaId;
+
+    @Column(name = "VISA_TYPE")
+    private String visaType;
 }

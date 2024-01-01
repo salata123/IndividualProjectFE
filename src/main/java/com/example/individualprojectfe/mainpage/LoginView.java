@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 @SpringComponent
 @Data
 public class LoginView extends VerticalLayout {
+    private static LoginView instance;
     private final RestTemplate restTemplate;
     private final TextField usernameField;
     private final PasswordField passwordField;
@@ -37,8 +38,7 @@ public class LoginView extends VerticalLayout {
     private String loggedUserUsername;
     private boolean isAuthenticated;
 
-    @Autowired
-    public LoginView(RestTemplate restTemplate) {
+    private LoginView(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
         usernameField = new TextField("Username");
         passwordField = new PasswordField("Password");
@@ -54,11 +54,18 @@ public class LoginView extends VerticalLayout {
         usernameField.addValueChangeListener(event -> checkUsernameAvailability());
     }
 
+    @Autowired
+    public static LoginView getInstance(RestTemplate restTemplate) {
+        if (instance == null) {
+            instance = new LoginView(restTemplate);
+        }
+        return instance;
+    }
+
     private void performLogin() {
         String username = usernameField.getValue();
         String password = passwordField.getValue();
 
-        // Construct the login request
         Map<String, String> data = new HashMap<>();
         data.put("username", username);
         data.put("password", password);
