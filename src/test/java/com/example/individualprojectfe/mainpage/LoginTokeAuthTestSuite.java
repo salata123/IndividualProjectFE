@@ -7,7 +7,6 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.client.RestTemplate;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import static org.mockito.Mockito.when;
@@ -26,21 +25,19 @@ public class LoginTokeAuthTestSuite {
 
     @Test
     void testIsTokenExpired(){
-        // Arrange
+        //Given
         String username = "testUser";
         Boolean mockResponse = true;
 
-        // Mocking the RestTemplate behavior
+        //When
         when(restTemplate.getForObject(
                 ArgumentMatchers.eq("http://localhost:8080/v1/loginTokens/checkExpiration/testUser"),
                 ArgumentMatchers.eq(Boolean.class)
         )).thenReturn(mockResponse);
 
-        // Act
         boolean result = loginTokenAuth.isTokenExpired(username);
-        System.out.println(result);
 
-        // Assert
+        //Then
         assertTrue(result);
     }
 }

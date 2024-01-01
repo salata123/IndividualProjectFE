@@ -1,5 +1,9 @@
 package com.example.individualprojectfe.mainpage;
 
+import com.example.individualprojectfe.mainpage.domain.client.CartService;
+import com.example.individualprojectfe.mainpage.domain.client.FlightService;
+import com.example.individualprojectfe.mainpage.domain.client.OrderService;
+import com.example.individualprojectfe.mainpage.domain.client.UserService;
 import com.example.individualprojectfe.mainpage.domain.flight.FlightDto;
 import com.example.individualprojectfe.mainpage.domain.user.OrderDto;
 import com.vaadin.flow.component.UI;
@@ -23,15 +27,21 @@ import java.util.List;
 @CssImport("./styles.css")
 public class ProfileView extends VerticalLayout {
 
-    private FlightClient flightClient;
+    private FlightService flightService;
     private LoginView loginView;
     private Grid<FlightDto> cartGrid;
     private Grid<OrderDto> ordersGrid;
+    private CartService cartService;
+    private UserService userService;
+    private OrderService orderService;
 
     @Autowired
-    public ProfileView(FlightClient flightClient, LoginView loginView) {
-        this.flightClient = flightClient;
+    public ProfileView(FlightService flightService, LoginView loginView, CartService cartService, UserService userService, OrderService orderService) {
+        this.flightService = flightService;
         this.loginView = loginView;
+        this.cartService = cartService;
+        this.userService = userService;
+        this.orderService = orderService;
         initProfileView();
     }
 
@@ -85,12 +95,12 @@ public class ProfileView extends VerticalLayout {
 
     private void refreshCart() {
         try {
-            List<Long> cartFlightIds = flightClient.getCartFlights(flightClient.getCurrentCartId());
+            List<Long> cartFlightIds = cartService.getCartFlights(cartService.getCurrentCartId());
 
             List<FlightDto> cartFlights = new ArrayList<>();
             if (cartFlightIds != null) {
                 for (Long flightId : cartFlightIds) {
-                    FlightDto cartFlight = flightClient.getFlightById(flightId);
+                    FlightDto cartFlight = flightService.getFlightById(flightId);
                     if (cartFlight != null) {
                         cartFlights.add(cartFlight);
                     } else {
@@ -109,7 +119,7 @@ public class ProfileView extends VerticalLayout {
 
     private void refreshOrdersList() {
         try {
-            List<OrderDto> orders = flightClient.getUserOrders(loginView.getLoggedUserUsername());
+            List<OrderDto> orders = userService.getUserOrders(loginView.getLoggedUserUsername());
             ordersGrid.setItems(orders);
         } catch (Exception e) {
             e.printStackTrace();
@@ -125,7 +135,7 @@ public class ProfileView extends VerticalLayout {
 
     private void removeFromCart(FlightDto flightDto) {
         try {
-            flightClient.removeFlightFromCart(flightClient.getCurrentCartId(), flightDto.getId());
+            cartService.removeFlightFromCart(cartService.getCurrentCartId(), flightDto.getId());
             refreshCart();
             Notification.show("Flight removed from cart: " + flightDto.getId());
         } catch (Exception e) {
@@ -136,7 +146,7 @@ public class ProfileView extends VerticalLayout {
 
     private void handleBuyButtonClick() {
         try {
-            flightClient.createOrderFromCart();
+            orderService.createOrderFromCart();
             clearCart();
             refreshCart();
             refreshOrdersList();
@@ -150,13 +160,13 @@ public class ProfileView extends VerticalLayout {
 
     private void clearCart() {
         try {
-            Long cartId = flightClient.getCurrentCartId();
+            Long cartId = cartService.getCurrentCartId();
 
             if (cartId != null) {
-                List<Long> flightIds = flightClient.getCartFlights(cartId);
+                List<Long> flightIds = cartService.getCartFlights(cartId);
                 if (flightIds != null) {
                     for (Long flightId : flightIds) {
-                        flightClient.removeFlightFromCart(cartId, flightId);
+                        cartService.removeFlightFromCart(cartId, flightId);
                     }
                 }
                 refreshCart();

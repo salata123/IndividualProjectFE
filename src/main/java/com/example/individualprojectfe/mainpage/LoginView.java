@@ -104,19 +104,15 @@ public class LoginView extends VerticalLayout {
         String username = usernameField.getValue();
         String password = passwordField.getValue();
 
-        // Check if the username is available before attempting registration
         if (checkUsernameAvailability()) {
-            // Construct the registration request
             Map<String, String> data = new HashMap<>();
             data.put("username", username);
             data.put("password", password);
 
-            // Create a new UserDto
             UserDto userDto = new UserDto();
             userDto.setUsername(username);
             userDto.setPassword(password);
 
-            // Send the registration request to the backend
             ResponseEntity<UserDto> registrationResponse = createUser(userDto);
 
             if (registrationResponse.getStatusCode() == HttpStatus.OK) {
@@ -132,7 +128,6 @@ public class LoginView extends VerticalLayout {
     private boolean checkUsernameAvailability() {
         String username = usernameField.getValue();
 
-        // Send a request to the backend to check if the username is already taken
         HttpClient httpClient = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/v1/users/checkUsername?username=" + URLEncoder.encode(username, StandardCharsets.UTF_8)))
@@ -142,11 +137,10 @@ public class LoginView extends VerticalLayout {
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            // If the response is "true", the username is taken; if "false", it's available
             return !Boolean.parseBoolean(response.body());
         } catch (Exception e) {
             e.printStackTrace();
-            return false; // Assume an error, so don't allow registration
+            return false;
         }
     }
 
@@ -160,7 +154,6 @@ public class LoginView extends VerticalLayout {
 
     private ResponseEntity<UserDto> createUser(UserDto userDto) {
         try {
-            // Send the registration request to the backend
             return restTemplate.postForEntity(
                     "http://localhost:8080/v1/users",
                     userDto,

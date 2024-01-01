@@ -1,7 +1,6 @@
 package com.example.individualprojectfe.mainpage.domain.airports;
 
 import lombok.Data;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,14 +46,6 @@ public class AirportDatabase {
         airports.add(new Airport("Stockholm Arlanda Airport", "Sweden", "SE", "ARN"));
         airports.add(new Airport("Doha Hamad International Airport", "Qatar", "QA", "DOH"));
         return airports;
-    }
-
-    public List<String> getIataCodes() {
-        List<String> iataCodes = new ArrayList<>();
-        for (Airport airport : airports) {
-            iataCodes.add(airport.getIataCode());
-        }
-        return iataCodes;
     }
 
     public List<String> getAirportNames() {

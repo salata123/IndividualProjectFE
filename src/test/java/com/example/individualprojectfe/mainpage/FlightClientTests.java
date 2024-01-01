@@ -1,24 +1,23 @@
 package com.example.individualprojectfe.mainpage;
 
-import com.example.individualprojectfe.mainpage.FlightClient;
-import com.example.individualprojectfe.mainpage.LoginView;
+import com.example.individualprojectfe.mainpage.domain.client.CartService;
+import com.example.individualprojectfe.mainpage.domain.client.FlightService;
+import com.example.individualprojectfe.mainpage.domain.client.OrderService;
+import com.example.individualprojectfe.mainpage.domain.client.UserService;
 import com.example.individualprojectfe.mainpage.domain.flight.FlightDto;
 import com.example.individualprojectfe.mainpage.domain.flight.RequestData;
 import com.example.individualprojectfe.mainpage.domain.user.CartDto;
-import com.example.individualprojectfe.mainpage.domain.user.OrderDto;
 import com.example.individualprojectfe.mainpage.domain.user.UserDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,13 +32,19 @@ class FlightClientTests {
 
     @Mock
     private LoginView loginView;
+    @InjectMocks
+    private CartService cartService;
+    @InjectMocks
+    private UserService userService;
+    @Mock
+    private OrderService orderService;
 
     @InjectMocks
-    private FlightClient flightClient;
+    private FlightService flightService;
 
     @BeforeEach
     void setUp() {
-        flightClient = new FlightClient(restTemplate);
+        flightService = new FlightService(restTemplate);
     }
 
     @Test
@@ -47,16 +52,14 @@ class FlightClientTests {
         RequestData requestData = new RequestData();
         FlightDto flightDto = new FlightDto();
 
-        // Mock the behavior of postForEntity
         when(restTemplate.postForEntity(
                 eq("http://localhost:8080/v1/flights/create/CityA/CityB"),
                 eq(requestData),
                 eq(FlightDto.class))
         ).thenReturn(new ResponseEntity<>(flightDto, HttpStatus.OK));
 
-        flightClient.createFlights("CityA", "CityB", requestData);
+        flightService.createFlights("CityA", "CityB", requestData);
 
-        // Verify that postForEntity was called with the expected parameters
         verify(restTemplate).postForEntity(
                 eq("http://localhost:8080/v1/flights/create/CityA/CityB"),
                 eq(requestData),
@@ -69,7 +72,7 @@ class FlightClientTests {
         FlightDto[] flights = {new FlightDto(), new FlightDto()};
         when(restTemplate.getForObject(anyString(), eq(FlightDto[].class))).thenReturn(flights);
 
-        List<FlightDto> result = flightClient.getAllFlights();
+        List<FlightDto> result = flightService.getAllFlights();
 
         assertEquals(2, result.size());
     }
@@ -78,11 +81,16 @@ class FlightClientTests {
     void getCartFlights() {
         CartDto cartDto = new CartDto();
         cartDto.setFlightList(List.of(1L, 2L, 3L));
+
+        when(loginView.getLoggedUserUsername()).thenReturn("testUser");
+
         when(restTemplate.getForObject(anyString(), eq(CartDto.class))).thenReturn(cartDto);
 
-        List<Long> result = flightClient.getCartFlights(1L);
+        List<Long> result = cartService.getCartFlights(1L);
 
         assertEquals(List.of(1L, 2L, 3L), result);
+
+        verify(loginView).getLoggedUserUsername();
     }
 
     @Test
@@ -90,23 +98,21 @@ class FlightClientTests {
         ResponseEntity<CartDto> responseEntity = new ResponseEntity<>(HttpStatus.OK);
         when(restTemplate.postForEntity(anyString(), any(), eq(CartDto.class), anyLong(), anyLong())).thenReturn(responseEntity);
 
-        flightClient.removeFlightFromCart(1L, 2L);
+        cartService.removeFlightFromCart(1L, 2L);
 
-        // Add assertions or verifications as needed
+        // TODO: ADD ASSERTIONS
     }
 
     @Test
     void addFlightToCart() {
-        // Assuming your flightClient has been initialized properly, you can use the following:
         when(restTemplate.postForEntity(
                 eq("http://localhost:8080/v1/carts/1/addFlight/2"),
                 eq(null),
                 eq(Void.class))
         ).thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
-        flightClient.addFlightToCart(1L, 2L);
+        cartService.addFlightToCart(1L, 2L);
 
-        // Now verify that the postForEntity method was called with the expected parameters
         verify(restTemplate).postForEntity(
                 eq("http://localhost:8080/v1/carts/1/addFlight/2"),
                 eq(null),
@@ -119,7 +125,7 @@ class FlightClientTests {
         UserDto userDto = new UserDto();
         when(restTemplate.getForObject(anyString(), eq(UserDto.class), eq("testUser"))).thenReturn(userDto);
 
-        UserDto result = flightClient.getUserByUsername("testUser");
+        UserDto result = userService.getUserByUsername("testUser");
 
         assertEquals(userDto, result);
     }
@@ -129,7 +135,7 @@ class FlightClientTests {
         FlightDto flightDto = new FlightDto();
         when(restTemplate.getForObject(anyString(), eq(FlightDto.class), anyLong())).thenReturn(flightDto);
 
-        FlightDto result = flightClient.getFlightById(1L);
+        FlightDto result = flightService.getFlightById(1L);
 
         assertEquals(flightDto, result);
     }
@@ -141,7 +147,7 @@ class FlightClientTests {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), eq(null), any(ParameterizedTypeReference.class), eq("testUser")))
                 .thenReturn(responseEntity);
 
-        List<Long> result = flightClient.getUserOrderIds("testUser");
+        List<Long> result = userService.getUserOrderIds("testUser");
 
         assertEquals(orderIds, result);
     }
@@ -154,7 +160,7 @@ class FlightClientTests {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), eq(null), any(ParameterizedTypeReference.class), eq("testUser")))
                 .thenReturn(responseEntity);
 
-        List<Long> result = flightClient.getUserOrderIds("testUser");
+        List<Long> result = userService.getUserOrderIds("testUser");
 
         assertEquals(orderIds, result);
     }

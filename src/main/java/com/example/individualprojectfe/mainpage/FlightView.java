@@ -2,6 +2,10 @@ package com.example.individualprojectfe.mainpage;
 
 import com.example.individualprojectfe.mainpage.domain.airports.AirportDatabase;
 import com.example.individualprojectfe.mainpage.domain.airports.Currency;
+import com.example.individualprojectfe.mainpage.domain.client.CartService;
+import com.example.individualprojectfe.mainpage.domain.client.FlightService;
+import com.example.individualprojectfe.mainpage.domain.client.OrderService;
+import com.example.individualprojectfe.mainpage.domain.client.UserService;
 import com.example.individualprojectfe.mainpage.domain.flight.FlightDto;
 import com.example.individualprojectfe.mainpage.domain.flight.RequestData;
 import com.vaadin.flow.component.ClickEvent;
@@ -36,7 +40,7 @@ import java.util.*;
 @SpringComponent
 @EnableScheduling
 public class FlightView extends VerticalLayout implements BeforeEnterObserver {
-    private final FlightClient flightClient;
+    private final FlightService flightService;
     private final Grid<FlightDto> flightGrid;
     private final ComboBox<Currency> currencyCodeComboBox;
     private final ComboBox<String> originLocationCodeComboBox;
@@ -57,13 +61,19 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
     private LoginView loginView;
     @Autowired
     private LoginTokenAuth loginTokenAuth;
+    private CartService cartService;
+    private UserService userService;
+    private OrderService orderService;
 
     private boolean sessionExpired = false;
 
     @Autowired
-    public FlightView(FlightClient flightClient, LoginView loginView) {
-        this.flightClient = flightClient;
+    public FlightView(FlightService flightService, LoginView loginView, CartService cartService, UserService userService, OrderService orderService) {
+        this.flightService = flightService;
         this.loginView = loginView;
+        this.cartService = cartService;
+        this.userService = userService;
+        this.orderService = orderService;
         airportDatabase = new AirportDatabase();
 
         Button createFlightsButton = new Button("Show Flights", event -> createFlights());
@@ -120,8 +130,6 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
                 .setWidth("150px");
         flightGrid.setWidth("50%");
 
-
-
         HorizontalLayout inputLayout = new HorizontalLayout(currencyCodeComboBox, originLocationCodeComboBox, destinationLocationCodeComboBox, departureDateField, departureTimeField);
         inputLayout.setSpacing(true);
 
@@ -139,7 +147,7 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
 
     private void refreshFlights() {
         try {
-            List<FlightDto> flights = flightClient.getAllFlights();
+            List<FlightDto> flights = flightService.getAllFlights();
             flightGrid.setItems(flights);
         } catch (Exception e) {
             e.printStackTrace();
@@ -162,20 +170,13 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
 
     private void addToCart(FlightDto flightDto) {
         try {
-
-            FlightDto selectedFlight = flightClient.getFlightById(flightDto.getId());
-
+            FlightDto selectedFlight = flightService.getFlightById(flightDto.getId());
 
             if (selectedFlight != null) {
-
-                flightClient.addFlightToCart(flightClient.getCurrentCartId(), selectedFlight.getId());
-
-
+                cartService.addFlightToCart(cartService.getCurrentCartId(), selectedFlight.getId());
                 refreshCart();
-
                 Notification.show("Flight added to cart: " + selectedFlight.getId());
             } else {
-
                 Notification.show("Error fetching flight details. Please try again.");
             }
         } catch (Exception e) {
@@ -192,12 +193,8 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
 
     private void removeFromCart(FlightDto flightDto) {
         try {
-
-            flightClient.removeFlightFromCart(flightClient.getCurrentCartId(), flightDto.getId());
-
-
+            cartService.removeFlightFromCart(cartService.getCurrentCartId(), flightDto.getId());
             refreshCart();
-
             Notification.show("Flight removed from cart: " + flightDto.getId());
         } catch (Exception e) {
             e.printStackTrace();
@@ -207,12 +204,11 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
 
     private void refreshCart() {
         try {
-            List<Long> cartFlightIds = flightClient.getCartFlights(flightClient.getCurrentCartId());
-
+            List<Long> cartFlightIds = cartService.getCartFlights(cartService.getCurrentCartId());
             List<FlightDto> cartFlights = new ArrayList<>();
             if (cartFlightIds != null) {
                 for (Long flightId : cartFlightIds) {
-                    FlightDto cartFlight = flightClient.getFlightById(flightId);
+                    FlightDto cartFlight = flightService.getFlightById(flightId);
                     if (cartFlight != null) {
                         cartFlights.add(cartFlight);
                     } else {
@@ -220,10 +216,7 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
                     }
                 }
             }
-
-
             cartGrid.setItems(cartFlights);
-
         } catch (Exception e) {
             e.printStackTrace();
             Notification.show("Error refreshing cart. Please try again.");
@@ -250,7 +243,7 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
             requestData.setDepartureTime(departureTime);
 
             if (isDepartureDateValid(departureDateField.getValue())) {
-                flightClient.createFlights(originCountryCode, destinationCountryCode, requestData);
+                flightService.createFlights(originCountryCode, destinationCountryCode, requestData);
                 refreshFlights();
                 Notification.show("Flights created successfully.");
             } else {
@@ -279,7 +272,7 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
         boolean isAuthenticated = isUserAuthenticated();
 
         if (isAuthenticated) {
-            Long currentCartId = flightClient.getCurrentCartId();
+            Long currentCartId = cartService.getCurrentCartId();
 
             if (currentCartId != null) {
                 showCart();
@@ -297,10 +290,8 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
             } else {
                 hideCart();
                 cartHeaderLayout.setVisible(false);
-
                 cartGrid.setVisible(false);
             }
-
             System.out.println("Update Cart Visibility - User Authenticated: " + isAuthenticated);
         } else {
             cartHeaderLayout.setVisible(false);
@@ -395,7 +386,6 @@ public class FlightView extends VerticalLayout implements BeforeEnterObserver {
 
     private void updateButtons() {
         topBar.removeAll();
-
         if (isUserAuthenticated()) {
             topBar.add(profileButton, logoutButton);
         } else {

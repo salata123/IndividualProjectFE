@@ -1,7 +1,5 @@
 package com.example.individualprojectfe.mainpage;
 
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +9,6 @@ import org.springframework.web.client.RestTemplate;
 public class LoginTokenAuth extends VerticalLayout {
     private static final String BASE_URL = "http://localhost:8080/v1/loginTokens/checkExpiration/";
     private final RestTemplate restTemplate;
-
     @Autowired
     public LoginTokenAuth(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
